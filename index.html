@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<meta name=viewport content="width=device-width, initial-scale=1" charset="utf-8">
+
+<head>
+<title>Trajectory</title>
+</head>
+
+<style>
+
+body{
+    margin-left: 33.33%;
+    margin-top: 40px;
+}
+
+#container {
+  display: flex;
+  flex-direction: row;
+}
+
+#textInstructions {
+  /* font-family: "Courier New", Courier, monospace; */
+  font-size: 24px;
+
+}
+
+#textBox {
+  height: 40px;
+  width: 500px;
+  font-size: 24px;
+  cursor: pointer;
+  background-color: transparent;
+  border: RGB(230,230,230) 2px solid;
+  padding: 0 20px;
+  margin: 0 0 30px 0;
+  font-family: "Courier New", Courier, monospace;
+}
+
+#textBox:hover {
+  cursor: text;
+}
+
+#displayBox {
+  height: 40px;
+  width: 800px;
+  font-size: 24px;
+  background-color: transparent;
+  /* border: RGB(230,230,230) 2px solid; */
+  padding: 0 20px;
+  margin: 0 0 30px 0;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.button{
+	height:30px;
+	width: 570px;
+	margin-bottom:20px;
+	border: 1px white solid;
+	font-size: 24px;
+	text-align: center;
+	background-color: lightgray;
+	color: black;
+	cursor: pointer;
+    font-family: "Courier New", Courier, monospace;
+}
+
+</style>
+
+<body>
+    <h1>The Sardinas-Patterson Algorithm</h1>
+          <form name="myform" action="#" onkeypress="handleClick(event)" autocomplete="off">
+            <div id="textInstructions">
+            Enter a set of generating blocks, separated by spaces.
+        </div>
+        <br><br>
+            <input type="text" id="textBox" placeholder="abc, ab, bc" >
+            <br><br>
+            <div class="button" id="submit" onClick="handleClick(1)"> Run!</div>
+            <div id="displayBox"></div>
+        </form>
+
+
+    </body>
+
+
+
+
+
+<script>
+
+function handleClick(e){
+    if(e.keyCode === 13) {
+        e.preventDefault();
+    }
+    if(e.keyCode === 13 || e === 1) {
+        var inputString = document.getElementById("textBox").value;
+        let rawInput = inputString.split(',');
+        let code = rawInput.map(part => part.trim());
+        displayBox.value = runProgram(code);
+  }
+
+  return false;
+}
+
+
+
+
+
+
+
+class Word {
+    constructor(partition_1, partition_2) {
+        this.partition_1 = partition_1;
+        this.partition_2 = partition_2;
+        this.end = partition_1.join('').slice(partition_2.join('').length);
+    }
+
+    toString() {
+        return `[${this.partition_1}] [${this.partition_2}]`;
+    }
+}
+
+function functionExtend(obj_input, word) {
+    const obj = new Word([...obj_input.partition_1], [...obj_input.partition_2]);
+    const partition_1 = obj.partition_1.join('');
+    const prefix = obj.partition_2.join('');
+
+    if (partition_1.startsWith(prefix + word)) {
+        obj.partition_2.push(word);
+        obj.end = partition_1.slice((prefix + word).length);
+        return obj;
+    } else if ((prefix + word).startsWith(partition_1)) {
+        obj.partition_2.push(word);
+        [obj.partition_2, obj.partition_1] = [obj.partition_1, obj.partition_2];
+        obj.end = (prefix + word).slice(partition_1.length);
+        return obj;
+    }
+    return false;
+}
+
+function generateC1(code) {
+    const c1 = new Set();
+    code.forEach((i, index) => {
+        code.slice(index + 1).forEach(j => {
+            if (j.startsWith(i)) {
+                c1.add(new Word([j], [i]));
+            } else if (i.startsWith(j)) {
+                c1.add(new Word([i], [j]));
+            }
+        });
+    });
+    return c1;
+}
+
+function generateCK(code, setOfWords) {
+    const ck = new Set();
+    setOfWords.forEach(i => {
+        code.forEach(j => {
+            const result = functionExtend(i, j);
+            if (result !== false) {
+                ck.add(result);
+            }
+        });
+    });
+    return ck;
+}
+
+function halt(allC) {
+    for (const word of allC[allC.length - 1]) {
+        if (word.end === '') {
+            return word;
+        }
+    }
+    if (allC.length < 2) {
+        return false;
+    }
+    const lastSetOfEnds = new Set(Array.from(allC[allC.length - 1]).map(d => d.end));
+    for (let i = 0; i < allC.length - 1; i++) {
+        const currentSetOfEnds = new Set(Array.from(allC[i]).map(d => d.end));
+        if (currentSetOfEnds.size === lastSetOfEnds.size && [...currentSetOfEnds].every(e => lastSetOfEnds.has(e))) {
+            return 1;
+        }
+    }
+    return false;
+}
+
+function runProgram(code) {
+    let myString = ''
+    let count = 0;
+    const allC = [generateC1(code)];
+    while (!halt(allC) && count < 10) {
+        allC.push(generateCK(code, allC[allC.length - 1]));
+        count += 1;
+    }
+    myString += "<br> -- code -- <br>" + code
+    allC.forEach((level, i) => {
+        myString += `<br><br>-- level ${i + 1} --`
+        level.forEach(j => {
+            console.log(j.toString())
+            myString += `<br>${j.toString()}`
+    });
+    });
+    console.log();
+    console.log('mystring')
+    console.log(myString)
+    console.log('mystring')
+    // myString += "<br><br>" + halt(allC)
+    
+    let haltResult = halt(allC)
+    
+    if (haltResult instanceof Word) {
+        console.log('here!')
+        myString += "<br><br> generating set is ambiguous <br><br>";
+    } else if (haltResult === 1) {
+        myString += "<br><br> generating set is unambiguous <br><br>";
+    } else {
+        myString += "default value";
+    }
+    document.getElementById("displayBox").innerHTML = myString;
+}
+const code = ['02', '12', '120', '20', '21']
+
+
+</script>

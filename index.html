@@ -48,6 +48,7 @@ body{
   padding: 0 20px;
   margin: 0 0 30px 0;
   font-family: "Courier New", Courier, monospace;
+  white-space: pre; 
 }
 
 .button{
@@ -191,27 +192,21 @@ function runProgram(code) {
         allC.push(generateCK(code, allC[allC.length - 1]));
         count += 1;
     }
-    myString += "<br> -- code -- <br>" + code
+    myString += "<br>-- code    -- <br>   [" + code + "]"
     allC.forEach((level, i) => {
         myString += `<br><br>-- level ${i + 1} --`
         level.forEach(j => {
-            console.log(j.toString())
-            myString += `<br>${j.toString()}`
+            myString += `<br>   ${j.toString()}`
     });
     });
-    console.log();
-    console.log('mystring')
-    console.log(myString)
-    console.log('mystring')
-    // myString += "<br><br>" + halt(allC)
     
     let haltResult = halt(allC)
     
     if (haltResult instanceof Word) {
         console.log('here!')
-        myString += "<br><br> generating set is ambiguous <br><br>";
+        myString += "<br><br>Generating set is ambiguous. <br><br>";
     } else if (haltResult === 1) {
-        myString += "<br><br> generating set is unambiguous <br><br>";
+        myString += "<br><br>Generating set is unambiguous. <br><br>";
     } else {
         myString += "default value";
     }
